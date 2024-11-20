@@ -60,7 +60,9 @@ app.get('/pair', async (req, res) => {
 
 async function initiatePairing(phone) {
 	return new Promise(async (resolve, reject) => {
-		if (!fs.existsSync(sessionDir)) await fs.mkdirSync(sessionDir);
+		if (!fs.existsSync(path.dirname(sessionDir))) {
+			fs.mkdirSync(path.dirname(sessionDir), { recursive: true });
+		}
 
 		const { state, saveCreds } = await useMultiFileAuthState(sessionDir);
 
