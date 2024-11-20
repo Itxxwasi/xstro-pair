@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Xstro</title>
+
+		<!-- Bootstrap CSS -->
+		<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet" />
+		<!-- Google Fonts -->
+		<link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300..700&family=Fira+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
+
+		<!-- Web Site logo -->
+		<link rel="shortcut icon" href="logo.jpg" type="image/x-icon" />
+
+		<!-- Internal CSS -->
+		<style>
+			body {
+				font-family: 'Fira Sans', sans-serif;
+				position: relative;
+				min-height: 100vh;
+				margin: 0;
+				display: flex;
+				justify-content: center;
+				align-items: center;
+				z-index: 1;
+				overflow: hidden;
+			}
+
+			body::before {
+				content: '';
+				position: absolute;
+				top: 0;
+				left: 0;
+				width: 100%;
+				height: 100%;
+				background: url(./thumb.jpg) no-repeat center center fixed;
+				background-size: cover;
+				filter: brightness(50%);
+				z-index: -1; /* Ensure it stays behind the content */
+			}
+
+			.form-control {
+				background: transparent; /* Make the background transparent */
+				color: white; /* Set text color to white */
+				border: none;
+				border-bottom: 2px solid rgb(255, 72, 0);
+				border-radius: 0;
+				box-shadow: none;
+				transition: border-bottom 0.3s ease;
+			}
+
+			.form-control:focus {
+				background: transparent; /* Ensure focus doesn't change background */
+				color: white; /* Keep text color white when focused */
+				border-bottom: 2px solid #b34b00; /* Focus border color */
+				box-shadow: none;
+				transform: scale(0.98);
+				transition: transform 0.2s ease, border-bottom-color 0.2s ease;
+			}
+
+			.form-control::placeholder {
+				color: white; /* Ensure placeholder text is white */
+			}
+
+			.form-wrapper {
+				background: rgba(0, 0, 0, 0.5);
+				padding: 30px;
+				border-radius: 10px;
+				box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+				width: 100%;
+				max-width: 400px;
+			}
+			.form-label {
+				color: white;
+			}
+			#plusicon {
+				color: white;
+			}
+			.btn-custom {
+				background-color: #b34b00;
+				border: none;
+				color: white;
+				font-weight: bold;
+				padding: 10px 20px;
+			}
+
+			.btn-custom:hover {
+				background-color: #b34b00;
+				color: white;
+				filter: brightness(1.2);
+			}
+
+			#loader {
+				display: none;
+				text-align: center;
+			}
+
+			#loader .spinner {
+				width: 50px;
+				height: 50px;
+				border: 5px solid #ddd;
+				border-top: 5px solid #b34b00;
+				border-radius: 50%;
+				animation: spin 1s linear infinite;
+			}
+
+			@keyframes spin {
+				0% {
+					transform: rotate(0deg); /* Start at 0 degrees */
+				}
+				100% {
+					transform: rotate(360deg); /* End at 360 degrees */
+				}
+			}
+
+			#result {
+				color: white;
+				text-shadow: 2px;
+				display: none;
+				text-align: center;
+				margin-top: 20px;
+			}
+
+			#result p {
+				font-size: 3em;
+				font-weight: bold;
+			}
+            
+			#result .copy-btn {
+				margin-top: 10px;
+				background-color: #b34b00;
+				color: #fff;
+				border: none;
+				padding: 5px 10px;
+				border-radius: 5px;
+				font-weight: bold;
+			}
+
+			#result .copy-btn:hover {
+				background-color: #b34b00;
+			}
+
+			.error {
+				color: red;
+				text-align: center;
+				margin-top: 10px;
+			}
+			input::-webkit-outer-spin-button,
+			input::-webkit-inner-spin-button {
+				-webkit-appearance: none;
+				margin: 0;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="form-wrapper" id="form-container">
+			<form id="phoneForm">
+				<div class="mb-4">
+					<label for="countryCode" class="form-label">Country Code</label>
+					<div class="input-group">
+						<span class="input-group-text bg-transparent border-0 px-1" id="plusicon">+</span>
+						<input type="number" class="form-control" id="countryCode" name="country_code" max="9999" placeholder="Code" required oninput="limitLength(this, 4)" />
+					</div>
+				</div>
+
+				<div class="mb-4">
+					<label for="phoneNumber" class="form-label">WhatsApp Number</label>
+					<input type="number" class="form-control" id="phoneNumber" name="phone" maxlength="15" placeholder="123 456 7890" required />
+				</div>
+
+				<div class="text-center">
+					<button type="submit" class="btn btn-custom">Get Code</button>
+				</div>
+			</form>
+			<p class="error" id="error" style="display: none">Something went wrong. Please try again.</p>
+		</div>
+
+		<div id="loader">
+			<div class="spinner"></div>
+		</div>
+
+		<div id="result">
+			<p id="responseText"></p>
+			<button class="copy-btn" onclick="copyToClipboard()">Copy</button>
+		</div>
+
+		<!-- Bootstrap JS -->
+		<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
+
+		<script>
+			const form = document.getElementById('phoneForm');
+			const formContainer = document.getElementById('form-container');
+			const loader = document.getElementById('loader');
+			const result = document.getElementById('result');
+			const responseText = document.getElementById('responseText');
+			const errorText = document.getElementById('error');
+
+			form.addEventListener('submit', async e => {
+				e.preventDefault();
+
+				// Get input values
+				const countryCode = document.getElementById('countryCode').value;
+				const phoneNumber = document.getElementById('phoneNumber').value;
+
+				// Hide form and show loader
+				formContainer.style.display = 'none';
+				loader.style.display = 'block';
+				errorText.style.display = 'none';
+
+				// Simulate spinner for 5 seconds
+				setTimeout(async () => {
+					try {
+						// Fetch response
+						const response = await fetch(`/pair?phone=+${countryCode}${phoneNumber}`);
+						const data = await response.json(); // Parse JSON response
+
+						// Hide loader and show result
+						loader.style.display = 'none';
+						if (data.code) {
+							result.style.display = 'block';
+							responseText.textContent = data.code;
+						} else {
+							throw new Error('Invalid response');
+						}
+					} catch (error) {
+						loader.style.display = 'none';
+						formContainer.style.display = 'block';
+						errorText.style.display = 'block';
+					}
+				}, 5000);
+			});
+
+			function copyToClipboard() {
+				const text = responseText.textContent;
+				navigator.clipboard.writeText(text).then(() => {
+					console.log('Code copied to clipboard!');
+				});
+			}
+			function limitLength(input, maxLength) {
+				if (input.value.length > maxLength) {
+					input.value = input.value.slice(0, maxLength);
+				}
+			}
+		</script>
+	</body>
+</html>
