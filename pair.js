@@ -25,16 +25,7 @@ const __dirname = dirname(__filename);
 
 app.use(express.static(path.join(__dirname, 'web')));
 
-function generateRandomId() {
-	const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-	let randomId = '';
-	for (let i = 0; i < 10; i++) {
-		randomId += characters.charAt(Math.floor(Math.random() * characters.length));
-	}
-	return randomId;
-}
-
-let sessionDir = `./auth/${generateRandomId()}`;
+let sessionDir = `./auth`;
 if (fs.existsSync(sessionDir)) fs.rmdirSync(sessionDir, { recursive: true });
 
 const clearSession = () => {
