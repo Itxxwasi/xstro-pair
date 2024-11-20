@@ -1,8 +1,10 @@
-FROM node:alpine
+FROM node:20
 WORKDIR /app
-COPY package*.json ./
-RUN npm install --platform=linuxmusl
-COPY . .
-RUN npm run build
+RUN apt-get update && \
+    apt-get install -y git && \
+    npm install -g pm2 && \
+    git config --global url."https://".insteadOf git:// && \
+    git config --global url."https://github.com/".insteadOf git@github.com:
+RUN yarn install --network-timeout 1000000
 EXPOSE 8000
 CMD ["npm", "start"]
