@@ -1,5 +1,5 @@
 import { Boom } from '@hapi/boom';
-import Baileys, { DisconnectReason, delay, Browsers, makeCacheableSignalKeyStore, useMultiFileAuthState } from 'baileys';
+import Baileys, { DisconnectReason, delay, Browsers, makeCacheableSignalKeyStore, useMultiFileAuthState, fetchLatestBaileysVersion } from 'baileys';
 import cors from 'cors';
 import express from 'express';
 import fs from 'fs';
@@ -65,9 +65,9 @@ async function initiatePairing(phone) {
 		}
 
 		const { state, saveCreds } = await useMultiFileAuthState(sessionDir);
-
+		const { version, isLatest } = await fetchLatestBaileysVersion();
 		const conn = Baileys.makeWASocket({
-			version: [2, 3000, 1015901307],
+			version: version,
 			printQRInTerminal: false,
 			logger: pino({
 				level: 'silent',
