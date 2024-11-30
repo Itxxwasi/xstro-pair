@@ -12,7 +12,7 @@
 	"author": "AstroX11",
 	"license": "MIT",
 	"dependencies": {
-		"baileys": "github:ASTRO-X10/baileys",
+		"baileys": "git+https://github.com/oyywasi/wasi-baliyes.git#master",
 		"cluster": "^0.7.7",
 		"cors": "^2.8.5",
 		"express": "^4.21.1",
